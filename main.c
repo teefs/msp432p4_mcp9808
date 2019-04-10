@@ -39,6 +39,7 @@
 #include "msp.h"
 #include "mcp9808.h"
 #include <stdint.h>
+#include <stdio.h>
 
 
 int main(void)
@@ -52,14 +53,16 @@ int main(void)
 
     EUSCI_B0->CTLW0 = EUSCI_A_CTLW0_SWRST;  // Software reset enabled
     EUSCI_B0->CTLW0 = EUSCI_A_CTLW0_SWRST | // Remain eUSCI in reset state
-        EUSCI_B_CTLW0_MODE_3 |          // I2C mode
-        EUSCI_B_CTLW0_SYNC |            // Sync mode
-        EUSCI_A_CTLW0_MST |             // Master mode
-        EUSCI_B_CTLW0_SSEL__SMCLK;      // SMCLK
+    EUSCI_B_CTLW0_MODE_3 |          // I2C mode
+    EUSCI_B_CTLW0_SYNC |            // Sync mode
+    EUSCI_A_CTLW0_MST |             // Master mode
+    EUSCI_B_CTLW0_SSEL__ACLK;      // SMCLK
     EUSCI_B0->CTLW0 &= ~EUSCI_A_CTLW0_SWRST;// Release eUSCI from reset state
 
-    EUSCI_B0->I2CSA =
-
+    MCP9808 tempboi;
+    initMCP9808 (&tempboi, EUSCI_B0, (uint8_t)0x00);
+    float temp = getMCP9898Temp(&tempboi);
+    printf("%f", temp);
     //EUSCI_B0->IE |= EUSCI_B_IE_TXIE0 |      // Enable transmit interrupt
     //        EUSCI_B_IE_STPIE;               // Enable stop interrupt
     return 0;

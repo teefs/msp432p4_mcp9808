@@ -11,8 +11,6 @@
 #include "msp.h"
 #include <stdint.h>
 
-#define
-
 enum mcp9808_registers {MCP9808_CONFIG = 0001,
                         MCP9808_TUPPER = 0010,
                         MCP9808_TLOWER = 0011,
@@ -35,7 +33,7 @@ typedef struct MSP432P4_MCP9808 {
     uint16_t config;
 } MCP9808;
 
-int initMCP9808 (MCP9808* device, EUSCI_B_Type i2cPeripheral, uint8_t addressBits);
+int initMCP9808 (MCP9808* device, EUSCI_B_Type *i2cPeripheral, uint8_t addressBits);
 int setAddress (MCP9808* device, uint8_t addressBits);
 uint8_t getAddress(MCP9808* device);
 
@@ -54,8 +52,8 @@ void setMCP9808TempSent (MCP9808* device, enum mcp9808_registers reg, uint16_t t
 //uint16_t readMCP9808 (MCP9808* device, enum mcp9808_registers reg);
 //void writeMCP9808 (MCP9808* device, enum mcp9808_registers reg, uint16_t data);
 
-static int read8 (MCP9808* device, enum mcp9808_registers reg);
+/* static int read8 (MCP9808* device, enum mcp9808_registers reg);
 static int read16 (MCP9808* device, enum mcp9808_registers reg);
 static void write8 (MCP9808* device, enum mcp9808_registers reg, uint8_t data);
-static void write16 (MCP9808* device, enum mcp9808_registers reg, uint16_t data);
+static void write16 (MCP9808* device, enum mcp9808_registers reg, uint16_t data); */
 #endif /* MCP9808_H_ */
