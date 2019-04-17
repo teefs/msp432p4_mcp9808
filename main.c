@@ -47,6 +47,10 @@ int main(void)
     WDT_A->CTL = WDT_A_CTL_PW |             // Stop watchdog timer
             WDT_A_CTL_HOLD;
 
+    //CS->KEY = CS_KEY_VAL;
+    //CS->CTL1 |= CS_CTL1_DIVS__8;
+    //CS->KEY &= ~CS_KEY_VAL;
+
     // Configure GPIO
     P1->SEL0 |= BIT6 | BIT7;                // I2C pins
 
@@ -56,13 +60,19 @@ int main(void)
     EUSCI_B_CTLW0_MODE_3 |          // I2C mode
     EUSCI_B_CTLW0_SYNC |            // Sync mode
     EUSCI_A_CTLW0_MST |             // Master mode
-    EUSCI_B_CTLW0_SSEL__ACLK;      // SMCLK
+    EUSCI_B_CTLW0_SSEL__SMCLK;
+    EUSCI_B0->BRW = 8;//30;
     EUSCI_B0->CTLW0 &= ~EUSCI_A_CTLW0_SWRST;// Release eUSCI from reset state
 
     MCP9808 tempboi;
     initMCP9808 (&tempboi, EUSCI_B0, (uint8_t)0x00);
-    float temp = getMCP9898Temp(&tempboi);
-    printf("%f", temp);
+    //getMCP9808Config(&tempboi);
+    float temp = 0;
+    temp = getMCP9898Temp(&tempboi);
+    if (temp > 50.0)
+        printf("Poop");
+    else
+        printf("Scoop");
     //EUSCI_B0->IE |= EUSCI_B_IE_TXIE0 |      // Enable transmit interrupt
     //        EUSCI_B_IE_STPIE;               // Enable stop interrupt
     return 0;

@@ -17,3 +17,16 @@ Debug/subdir_rules.mk
 Debug/subdir_vars.mk
 Debug/system_msp432p4111.d
 Debug/system_msp432p4111.o
+.settings/org.eclipse.cdt.debug.core.prefs
+Debug__TI/ccsObjs.opt
+Debug__TI/main.d
+Debug__TI/main.obj
+Debug__TI/mcp9808.d
+Debug__TI/mcp9808.obj
+Debug__TI/msp432p4_mcp9808.map
+Debug__TI/msp432p4_mcp9808.out
+Debug__TI/msp432p4_mcp9808_linkInfo.xml
+Debug__TI/startup_msp432p4111_ccs.d
+Debug__TI/startup_msp432p4111_ccs.obj
+Debug__TI/system_msp432p4111.d
+Debug__TI/system_msp432p4111.obj
