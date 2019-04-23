@@ -12,10 +12,10 @@
 /* Declaration for local functions and resources that do not need to be exposed to the user. */
 #define NACKIV 0x4
 
-static uint8_t read8 (MCP9808* device, enum mcp9808_registers reg);
-static uint16_t read16 (volatile MCP9808* device, enum mcp9808_registers reg, uint16_t* buffer)
-static int write8 (MCP9808* device, enum mcp9808_registers reg, uint8_t data)
-static int write16 (MCP9808* device, enum mcp9808_registers reg, uint16_t data)
+static int read8 (MCP9808* device, enum mcp9808_registers reg, uint8_t* buffer);
+static int read16 (MCP9808* device, enum mcp9808_registers reg, uint16_t* buffer);
+static int write8 (MCP9808* device, enum mcp9808_registers reg, uint8_t data);
+static int write16 (MCP9808* device, enum mcp9808_registers reg, uint16_t data);
 static uint16_t getConfig (MCP9808* device);
 static int setMCP9808Config (MCP9808* device, uint16_t config);
 
@@ -30,7 +30,14 @@ int initMCP9808 (MCP9808* device, volatile EUSCI_B_Type *i2cPeripheral, uint8_t 
     i2cPeripheral->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;
     i2cPeripheral->IE = EUSCI_B_IE_RXIE0 | EUSCI_B_IE_TXIE0 | EUSCI_B_IE_NACKIE;
 
-    // Should also read the Config register for the MCP9808 and populate the device->config variable. This will also error-check the slave address.
+    uint16_t manuID, devID;
+
+    if (read16(device, MCP9808_MANUID, &manuID) == -1 || read16(device, MCP9808_DEVID, &devID) == -1)
+        return -3;
+
+    if (manuID != 0x0054 || devID != 0x0400)
+        return -1;
+
     return 0;
 }
 
@@ -51,7 +58,7 @@ void shutdownOrWakeup (MCP9808* device, uint8_t shtdwn){
 //    write16 (device, MCP9808_CONFIG, device->config);
 }
 
-float getMCP9898Temp (MCP9808* device){
+float getMCP9808Temp (MCP9808* device){
     uint16_t ta;
     if (read16 (device, MCP9808_TA, &ta) == -1)
         return -255;
@@ -63,11 +70,15 @@ float getMCP9898Temp (MCP9808* device){
     return temp;
 }
 uint8_t getMCP9808Res (MCP9808* device){
-    return read8 (device, MCP9808_RESOLUTION);
+    uint8_t buffer;
+
+    if (read8 (device, MCP9808_RESOLUTION, &buffer) != 0)
+        return 0x100;
+    return buffer;
 }
 
-void setMCP9808Res (MCP9808* device, enum mcp9808_resolution res){
-    write8 (device, MCP9808_RESOLUTION, (uint8_t) res);
+int setMCP9808Res (MCP9808* device, enum mcp9808_resolution res){
+    //write8 (device, MCP9808_RESOLUTION, (uint8_t) res);
 }
 
 int getMCP9808Config (MCP9808* device){
@@ -77,7 +88,7 @@ int getMCP9808Config (MCP9808* device){
     return 0;
 }
 
-void setMCP9808Config (MCP9808* device, uint16_t config){
+int setMCP9808Config (MCP9808* device, uint16_t config){
 
 }
 
@@ -95,25 +106,79 @@ void setMCP9808TempSent (MCP9808* device, enum mcp9808_registers reg, uint16_t t
     }
 }
 
-static uint8_t read8 (MCP9808* device, enum mcp9808_registers reg);{
-    return 0;
+static int read8 (MCP9808* device, enum mcp9808_registers reg, uint8_t* buffer){
+    __disable_irq();
+        if (device == NULL || buffer == NULL || reg != MCP9808_RESOLUTION)
+            return -1;
+
+        uint16_t prevIEReg = device->i2cDevice->IE;
+        uint16_t prevTBCNT = device->i2cDevice->TBCNT;
+        uint16_t prevCTLW1 = device->i2cDevice->CTLW1;
+
+        device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TR;
+        device->i2cDevice->IE = EUSCI_B_IE_RXIE0 | EUSCI_B_IE_TXIE0 | EUSCI_B_IE_NACKIE;
+        device->i2cDevice->I2CSA = (uint16_t) device->address;
+        device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
+
+        while (device->i2cDevice->IV == 0);
+
+        device->i2cDevice->TXBUF = reg;
+
+        while (device->i2cDevice->IV == 0);
+        if (device->i2cDevice->IV & NACKIV){
+            device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTP;
+            device->i2cDevice->IFG = 0;
+            return -1;
+        }
+
+
+        //while (device->i2cDevice->IFG & EUSCI_B_IFG_STTIFG == 0);
+        // HAVE TO USE AUTOMATIC STOP GENERATION.
+//        device->i2cDevice->CTLW0 |= EUSCI_A_CTLW0_SWRST;
+//        device->i2cDevice->TBCNT = 0x1;
+//        device->i2cDevice->CTLW1 |= EUSCI_B_CTLW1_ASTP_2;
+//        device->i2cDevice->CTLW0 &= ~EUSCI_A_CTLW0_SWRST;
+//        device->i2cDevice->IE = EUSCI_B_IE_RXIE0 | EUSCI_B_IE_TXIE0 | EUSCI_B_IE_NACKIE;
+
+        device->i2cDevice->CTLW0 &= ~EUSCI_B_CTLW0_TR;
+        device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
+        while (device->i2cDevice->CTLW0 & EUSCI_B_CTLW0_TXSTT);
+        device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTP;
+
+        while (device->i2cDevice->IV == 0);
+        if (device->i2cDevice->IV & NACKIV){
+            device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTP;
+            device->i2cDevice->IFG = 0;
+            return -1;
+        }
+        //device->i2cDevice->IFG = 0;
+        *buffer = EUSCI_B0->RXBUF;
+
+        while (device->i2cDevice->IFG & EUSCI_B_IFG_STPIFG == 0);
+        device->i2cDevice->IFG = 0;
+        //device->i2cDevice->CTLW0 |= EUSCI_A_CTLW0_SWRST;
+        //device->i2cDevice->CTLW1 = prevCTLW1;
+        //device->i2cDevice->TBCNT = prevTBCNT;
+        //device->i2cDevice->CTLW0 &= ~EUSCI_A_CTLW0_SWRST;
+        //device->i2cDevice->IE = prevIEReg;
+
+        __enable_irq();
+        return 0;
 }
 
-static uint16_t read16 (volatile MCP9808* device, enum mcp9808_registers reg, uint16_t* buffer){
+static int read16 (MCP9808* device, enum mcp9808_registers reg, uint16_t* buffer){
     __disable_irq();
-    if (buffer == NULL)
+    if (device == NULL || buffer == NULL || reg == MCP9808_RESOLUTION)
         return -1;
 
+    uint16_t prevIEReg = device->i2cDevice->IE;
+
     device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TR;
+    device->i2cDevice->IE = EUSCI_B_IE_RXIE0 | EUSCI_B_IE_TXIE0 | EUSCI_B_IE_NACKIE;
     device->i2cDevice->I2CSA = (uint16_t) device->address;
     device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
 
     while (device->i2cDevice->IV == 0);
-    if (device->i2cDevice->IV & NACKIV){
-        device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTP;
-        device->i2cDevice->IFG = 0;
-        return -1;
-    }
 
     device->i2cDevice->TXBUF = reg;
 
@@ -123,7 +188,7 @@ static uint16_t read16 (volatile MCP9808* device, enum mcp9808_registers reg, ui
         device->i2cDevice->IFG = 0;
         return -1;
     }
-    device->i2cDevice->IFG = 0;
+    //device->i2cDevice->IFG = 0;
 
 
     device->i2cDevice->CTLW0 &= ~EUSCI_B_CTLW0_TR;
@@ -135,9 +200,10 @@ static uint16_t read16 (volatile MCP9808* device, enum mcp9808_registers reg, ui
         device->i2cDevice->IFG = 0;
         return -1;
     }
-    device->i2cDevice->IFG = 0;
+    //device->i2cDevice->IFG = 0;
 
     *buffer = EUSCI_B0->RXBUF << 8;
+    device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTP;
 
     while (device->i2cDevice->IV == 0);
     if (device->i2cDevice->IV & NACKIV){
@@ -145,10 +211,12 @@ static uint16_t read16 (volatile MCP9808* device, enum mcp9808_registers reg, ui
         device->i2cDevice->IFG = 0;
         return -1;
     }
-    device->i2cDevice->IFG = 0;
 
-    device->i2cDevice->CTLW0 |= EUSCI_B_CTLW0_TXSTP;
     *buffer |= EUSCI_B0->RXBUF;
+
+    while (device->i2cDevice->IFG & EUSCI_B_IFG_STPIFG == 0);
+    device->i2cDevice->IFG = 0;
+    device->i2cDevice->IE = prevIEReg;
 
     __enable_irq();
     return 0;

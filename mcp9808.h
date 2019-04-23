@@ -45,7 +45,7 @@ int setAlertConditions (MCP9808* device, uint8_t tCritOnly);
 int setAlertOutputPolarity (MCP9808* device, uint8_t activeHigh);
 int clearAlertInterrupt (MCP9808* device);
 
-float getMCP9898Temp (MCP9808* device);
+float getMCP9808Temp (MCP9808* device);
 int setTempHysteresis (MCP9808* device, uint8_t hyst);
 int lockUnlockTempSentinels (MCP9808* device, uint8_t lock);
 float getMCP9808TempSentinel (MCP9808* device, enum mcp9808_registers reg);

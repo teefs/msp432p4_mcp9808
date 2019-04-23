@@ -55,24 +55,22 @@ int main(void)
     P1->SEL0 |= BIT6 | BIT7;                // I2C pins
 
 
-    EUSCI_B0->CTLW0 = EUSCI_A_CTLW0_SWRST;  // Software reset enabled
-    EUSCI_B0->CTLW0 = EUSCI_A_CTLW0_SWRST | // Remain eUSCI in reset state
-    EUSCI_B_CTLW0_MODE_3 |          // I2C mode
-    EUSCI_B_CTLW0_SYNC |            // Sync mode
+    EUSCI_B0->CTLW0 = EUSCI_A_CTLW0_SWRST | EUSCI_B_CTLW0_SYNC;  // Software reset enabled
+    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_MODE_3 |          // I2C mode
     EUSCI_A_CTLW0_MST |             // Master mode
     EUSCI_B_CTLW0_SSEL__SMCLK;
-    EUSCI_B0->BRW = 8;//30;
+    EUSCI_B0->BRW = 30;//30;
     EUSCI_B0->CTLW0 &= ~EUSCI_A_CTLW0_SWRST;// Release eUSCI from reset state
 
     MCP9808 tempboi;
-    initMCP9808 (&tempboi, EUSCI_B0, (uint8_t)0x00);
+    initMCP9808 (&tempboi, EUSCI_B0, (uint8_t)24);
+    uint8_t res = getMCP9808Res (&tempboi);
+    float temp = getMCP9808Temp (&tempboi);
     //getMCP9808Config(&tempboi);
-    float temp = 0;
-    temp = getMCP9898Temp(&tempboi);
-    if (temp > 50.0)
-        printf("Poop");
-    else
-        printf("Scoop");
+    //float temp = 0;
+    //while (1){
+    //    temp = getMCP9898Temp(&tempboi);
+    //}
     //EUSCI_B0->IE |= EUSCI_B_IE_TXIE0 |      // Enable transmit interrupt
     //        EUSCI_B_IE_STPIE;               // Enable stop interrupt
     return 0;
