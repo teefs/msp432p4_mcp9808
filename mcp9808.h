@@ -32,11 +32,11 @@ typedef struct MSP432P4_MCP9808 {
 
 int initMCP9808 (MCP9808* device, volatile EUSCI_B_Type *i2cPeripheral, uint8_t address);
 int setAddress (MCP9808* device, uint8_t address);
-void setAddressByBits (MCP9808* device, uint8_t A2, uint8_t A1, uint8_t A0);
+int setAddressByBits (MCP9808* device, uint8_t A2, uint8_t A1, uint8_t A0);
 uint8_t getAddress(MCP9808* device);
 int shutdownWake (MCP9808* device, uint8_t shtdwn);
-uint8_t getMCP9808Res (MCP9808* device);
-int setMCP9808Res (MCP9808* device, enum mcp9808_resolution res);
+uint8_t getMCP9808Resolution (MCP9808* device);
+int setMCP9808Resolution (MCP9808* device, enum mcp9808_resolution res);
 
 
 int enableDisableAlertPin (MCP9808* device, uint8_t enable);

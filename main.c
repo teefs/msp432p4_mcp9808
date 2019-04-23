@@ -64,8 +64,12 @@ int main(void)
 
     MCP9808 tempboi;
     initMCP9808 (&tempboi, EUSCI_B0, (uint8_t)24);
-    uint8_t res = getMCP9808Res (&tempboi);
+    setMCP9808Resolution (&tempboi, MCP9808_QUARTER_DEG);
+    uint8_t res = getMCP9808Resolution (&tempboi);
     float temp = getMCP9808Temp (&tempboi);
+
+    setMCP9808TempSentinel(&tempboi, MCP9808_TUPPER, temp);
+    float temp2 = getMCP9808TempSentinel(&tempboi, MCP9808_TUPPER);
     //getMCP9808Config(&tempboi);
     //float temp = 0;
     //while (1){
