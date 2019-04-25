@@ -30,3 +30,12 @@ Debug__TI/startup_msp432p4111_ccs.d
 Debug__TI/startup_msp432p4111_ccs.obj
 Debug__TI/system_msp432p4111.d
 Debug__TI/system_msp432p4111.obj
+/Debug__TI/
+/Debug/
+/main.c
+/msp432p4111.cmd
+/msp432p4111.lds
+/startup_msp432p4111_ccs.c
+/startup_msp432p4111_gcc.c
+/system_msp432p4111.c
+/targetConfigs/
